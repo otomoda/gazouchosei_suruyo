@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="robots" content="noindex">
+  <title>画像サイズ調整（ピンチズーム＋落下アニメ対応）</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #000;
+      font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    #container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      overflow: hidden;
+    }
+
+    #photo {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      transition: transform 0.1s ease-out;
+      touch-action: none;
+    }
+
+    #controls {
+      position: absolute;
+      bottom: 20px;
+      width: 90%;
+      left: 5%;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 12px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: white;
+    }
+
+    .top-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 5px;
+      overflow-x: auto;        /* 横スクロールを許可 */
+      white-space: nowrap;     /* 折り返さない */
+      padding-bottom: 5px;     /* スクロールバーとの間を少し開ける */
+      width: 100%;
+      -webkit-overflow-scrolling: touch; /* スマホの慣性スクロール対応 */
+      scrollbar-width: thin;             /* スクロールバーを細く（Firefox） */
+    }
+
+    .thumbnail {
+      width: 60px;
+      height: 60px;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: border 0.2s;
+      flex: 0 0 auto; /* 横スクロール時に画像が固定幅で並ぶように */
+    }
+
+
+    .thumbnail:hover {
+      border: 2px solid #60a5fa;
+    }
+
+    .thumbnail.active {
+      border: 2px solid #2563eb;
+    }
+
+    input[type=range] {
+      width: 100%;
+    }
+
+    .btn {
+      background: #2563eb;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+
+    .btn:active {
+      background: #1e4ed8;
+    }
+
+    #dim-container {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-top: 5px;
+      font-size: 14px;
+    }
+
+    #dim, #filename {
+      font-size: 14px;
+    }
+
+    label {
+      margin-top: 5px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .thumbnail-container {
+      display: flex;
+      overflow-x: auto;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 5px 10px;
+      border-radius: 10px;
+      margin-top: 5px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+  </style>
+</head>
+<body>
+  <div id="container">
+    <img id="photo"
+      src="normal_apple.PNG"
+      alt="画像">
+    <div id="controls">
+
+      <div class="top-buttons">
+        <button id="toggleThumbnails" class="btn">画像一覧 表示/非表示</button>
+      </div>
+
+      <!-- ✅ サムネイル一覧を別ブロックに分離 -->
+      <div id="thumbnailContainer" class="top-buttons">
+        <img src="normal_apple.PNG" class="thumbnail active" data-src="normal_apple.PNG">
+        <img src="apple_1024.png" class="thumbnail active" data-src="apple_1024.png">
+        <img src="apple_nurunuru.PNG" class="thumbnail" data-src="apple_nurunuru.PNG">
+        <img src="normal_grape.PNG" class="thumbnail active" data-src="normal_grape.PNG">
+        <img src="grape_gotsugotsu.PNG" class="thumbnail" data-src="grape_gotsugotsu.PNG">
+        <img src="grape_huwahuwa.PNG" class="thumbnail" data-src="grape_huwahuwa.PNG">
+        <img src="realapple_gotsugotsu.PNG" class="thumbnail" data-src="realapple_gotsugotsu.PNG">
+        <img src="realgrape_huwahuwa.PNG" class="thumbnail" data-src="realgrape_huwahuwa.PNG">
+        <img src="normal_orange.PNG" class="thumbnail active" data-src="normal_orange.PNG">
+        <img src="orange_turuturu.PNG" class="thumbnail" data-src="orange_turuturu.PNG">
+        <img src="orange_nurunuru.PNG" class="thumbnail" data-src="orange_nurunuru.PNG">
+        <img src="orange_gotsugotsu.PNG" class="thumbnail" data-src="orange_gotsugotsu.PNG">
+    </div>
+
+      <label for="sizeRange">サイズ調整 (5〜2000px):</label>
+      <input id="sizeRange" type="range" min="5" max="2000" value="400">
+
+      <button id="fallButton" class="btn">落下</button>
+
+      <label for="speedRange">落下スピード調整:</label>
+      <input id="speedRange" type="range" min="1" max="20" value="5">
+
+      <div id="speedDisplay">速度: 5</div>
+
+      <!-- ✅ サイズとファイル名を横並びで表示 -->
+      <div id="dim-container">
+        <div id="dim">-- × --</div>
+        <div id="filename">画像名: image1.jpg</div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const photo = document.getElementById('photo');
+    const sizeRange = document.getElementById('sizeRange');
+    const dim = document.getElementById('dim');
+    const filename = document.getElementById('filename');
+    const fallButton = document.getElementById('fallButton');
+    const speedRange = document.getElementById('speedRange');
+    const speedDisplay = document.getElementById('speedDisplay');
+    const container = document.getElementById('container');
+    const thumbnails = document.querySelectorAll('.thumbnail');
+
+    let startDistance = 0;
+    let naturalWidth = 400;
+    let naturalHeight = 800;
+    let y = 0;
+    let fallSpeed = 5;
+    let falling = false;
+
+    // 🔸 サムネイルクリックで画像変更
+    thumbnails.forEach(thumb => {
+      thumb.addEventListener('click', () => {
+        thumbnails.forEach(t => t.classList.remove('active'));
+        thumb.classList.add('active');
+        const selectedSrc = thumb.dataset.src;
+        photo.src = selectedSrc;
+        filename.textContent = `画像名: ${selectedSrc}`;
+        photo.onload = () => {
+          naturalWidth = photo.naturalWidth;
+          naturalHeight = photo.naturalHeight;
+          sizeRange.value = Math.min(Math.max(naturalWidth, 5), 2000);
+          updateDim();
+        };
+      });
+    });
+
+    // ピンチ距離の計算
+    function getDistance(touches) {
+      const [t1, t2] = touches;
+      const dx = t1.pageX - t2.pageX;
+      const dy = t1.pageY - t2.pageY;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    // ピンチズームイベント
+    photo.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 2) {
+        startDistance = getDistance(e.touches);
+      }
+    });
+
+    photo.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 2) {
+        const newDistance = getDistance(e.touches);
+        const scaleChange = newDistance / startDistance;
+        let newWidth = photo.clientWidth * scaleChange;
+        newWidth = Math.max(5, Math.min(newWidth, 2000));
+        const aspect = naturalHeight / naturalWidth;
+        photo.style.width = newWidth + 'px';
+        photo.style.height = newWidth * aspect + 'px';
+        updateDim();
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    // サイズスライダー操作
+    sizeRange.addEventListener('input', (e) => {
+      const newWidth = Number(e.target.value);
+      const aspect = naturalHeight / naturalWidth;
+      photo.style.width = newWidth + 'px';
+      photo.style.height = newWidth * aspect + 'px';
+      updateDim();
+    });
+
+    // スピードスライダー操作
+    speedRange.addEventListener('input', (e) => {
+      fallSpeed = Number(e.target.value);
+      speedDisplay.textContent = `速度: ${fallSpeed}`;
+    });
+
+    function updateDim() {
+      const w = Math.round(photo.getBoundingClientRect().width);
+      const h = Math.round(photo.getBoundingClientRect().height);
+      dim.textContent = `${h} × ${w}`;
+    }
+
+    // 落下アニメーション
+    function fallLoop() {
+      if (!falling) return;
+      y += fallSpeed;
+      if (y > container.clientHeight) {
+        y = -photo.clientHeight; // ループして上に戻る
+      }
+      photo.style.top = y + 'px';
+      requestAnimationFrame(fallLoop);
+    }
+
+    fallButton.addEventListener('click', () => {
+      if (!falling) {
+        falling = true;
+        y = 0;
+        requestAnimationFrame(fallLoop);
+        fallButton.textContent = '停止';
+      } else {
+        falling = false;
+        fallButton.textContent = '落下';
+      }
+    });
+
+    window.addEventListener('load', () => {
+      updateDim();
+      filename.textContent = `画像名: normal_apple.png`;
+    });
+
+    const toggleButton = document.getElementById('toggleThumbnails');
+    const thumbnailContainer = document.getElementById('thumbnailContainer');
+
+    toggleButton.addEventListener('click', () => {
+    thumbnailContainer.classList.toggle('hidden');
+    toggleButton.textContent = thumbnailContainer.classList.contains('hidden')
+       ? '画像一覧を表示'
+       : '画像一覧を非表示';
+    });
+  </script>
+</body>
+</html>
