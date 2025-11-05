@@ -167,8 +167,9 @@
         <img src="pet_huwahuwa.png" class="thumbnail" data-src="pet_huwahuwa.png">
       </div>
 
-      <label for="sizeRange">サイズ調整 (5〜2000px):</label>
-      <input id="sizeRange" type="range" min="5" max="2000" value="400">
+      <label for="sizeRange">サイズ調整 (1〜100%):</label>
+      <input id="sizeRange" type="range" min="1" max="100" value="50">
+
 
       <button id="fallButton" class="btn">落下</button>
 
@@ -179,7 +180,7 @@
 
       <!-- ✅ サイズとファイル名を横並びで表示 -->
       <div id="dim-container">
-        <div id="dim">-- × --</div>
+        <div id="sizeDisplay">サイズ: 50%</div>
         <div id="filename">画像名: image1.jpg</div>
       </div>
 
@@ -252,12 +253,13 @@
 
     // サイズスライダー操作
     sizeRange.addEventListener('input', (e) => {
-      const newWidth = Number(e.target.value);
-      const aspect = naturalHeight / naturalWidth;
-      photo.style.width = newWidth + 'px';
-      photo.style.height = newWidth * aspect + 'px';
-      updateDim();
+      const percent = Number(e.target.value);
+      photo.style.width = percent + '%';
+      photo.style.height = 'auto';
+      sizeDisplay.textContent = `サイズ: ${percent}%`;
+      //updateDim();
     });
+
 
     // スピードスライダー操作
     speedRange.addEventListener('input', (e) => {
@@ -295,7 +297,9 @@
     });
 
     window.addEventListener('load', () => {
-      updateDim();
+      //updateDim();
+      photo.style.width = '50%';
+      sizeDisplay.textContent = 'サイズ: 50%';
       filename.textContent = `画像名: normal_apple.png`;
     });
 
