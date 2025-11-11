@@ -136,6 +136,33 @@
       display: none !important;
     }
 
+    .speed-control {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .speed-buttons {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 8px;
+      gap: 8px;
+    }
+
+    .adjust-buttons button,
+    #fallButton {
+      margin: 0 4px;
+      padding: 4px 10px;
+      font-size: 14px;
+      border-radius: 8px;
+    }
+
+    #fallButton {
+      background-color: #4CAF50;
+      color: white;
+      font-weight: bold;
+    }
+
   </style>
 </head>
 <body>
@@ -167,16 +194,28 @@
         <img src="pet_huwahuwa.png" class="thumbnail" data-src="pet_huwahuwa.png">
       </div>
 
-      <label for="sizeRange">サイズ調整 (1〜100%):</label>
-      <input id="sizeRange" type="range" min="1" max="100" value="50">
-
-
-      <button id="fallButton" class="btn">落下</button>
+      <label for="sizeRange">サイズ調整 (0〜100%):</label>
+      <input id="sizeRange" type="range" min="0" max="100" value="50">
 
       <label for="speedRange">落下スピード調整:</label>
-      <input id="speedRange" type="range" min="1" max="20" value="5">
+      <!-- 落下スピード調整 -->
+      <div class="speed-control">
+        <label for="speedRange">落下スピード（%/秒）:</label>
+        <span id="speedValue">10%</span><br>
+        <input id="speedRange" type="range" min="0" max="200" value="10" step="1">
 
-      <div id="speedDisplay">速度: 5</div>
+        <!-- ✅ 落下開始ボタンと速度調整ボタン群を横並びに配置 -->
+        <div class="speed-buttons">
+          <button id="fallButton">落下開始</button>
+          <div class="adjust-buttons">
+            <button id="minus10">−10%</button>
+            <button id="minus1">−1%</button>
+            <button id="plus1">＋1%</button>
+            <button id="plus10">＋10%</button>
+          </div>
+        </div>
+      </div>
+
 
       <!-- ✅ サイズとファイル名を横並びで表示 -->
       <div id="dim-container">
@@ -213,10 +252,17 @@
         const selectedSrc = thumb.dataset.src;
         photo.src = selectedSrc;
         filename.textContent = `画像名: ${selectedSrc}`;
+        
         photo.onload = () => {
           naturalWidth = photo.naturalWidth;
           naturalHeight = photo.naturalHeight;
-          sizeRange.value = Math.min(Math.max(naturalWidth, 5), 2000);
+
+          // ✅ スライダーの現在値を維持して画像サイズを更新
+          const currentPercent = Number(sizeRange.value);
+          photo.style.width = currentPercent + '%';
+          photo.style.height = 'auto';
+          sizeDisplay.textContent = `サイズ: ${currentPercent}%`;
+
           updateDim();
         };
       });
@@ -264,8 +310,26 @@
     // スピードスライダー操作
     speedRange.addEventListener('input', (e) => {
       fallSpeed = Number(e.target.value);
-      speedDisplay.textContent = `速度: ${fallSpeed}`;
+      speedDisplay.textContent = `速度: ${fallSpeed}%`;
     });
+
+    document.getElementById('minus10').addEventListener('click', () => changeSpeed(-10));
+    document.getElementById('minus1').addEventListener('click', () => changeSpeed(-1));
+    document.getElementById('plus1').addEventListener('click', () => changeSpeed(1));
+    document.getElementById('plus10').addEventListener('click', () => changeSpeed(10));
+
+    function changeSpeed(delta) {
+      const range = document.getElementById('speedRange');
+      let newValue = parseInt(range.value) + delta;
+
+      // 範囲を1〜200に制限
+      if (newValue < 0) newValue = 0;
+      if (newValue > 200) newValue = 200;
+
+      range.value = newValue;
+      fallSpeed = newValue;
+      document.getElementById('speedValue').textContent = newValue + '%';
+    }
 
     function updateDim() {
       const w = Math.round(photo.getBoundingClientRect().width);
@@ -274,25 +338,40 @@
     }
 
     // 落下アニメーション
-    function fallLoop() {
-      if (!falling) return;
-      y += fallSpeed;
-      if (y > container.clientHeight) {
-        y = -photo.clientHeight; // ループして上に戻る
+    let lastTime = 0;
+
+    function fallLoop(timestamp) {
+      if (!falling) {
+        lastTime = 0;
+        return;
       }
+
+      if (!lastTime) lastTime = timestamp;
+      const deltaTime = (timestamp - lastTime) / 1000; // 経過時間[秒]
+      lastTime = timestamp;
+
+      // ✅ 1秒あたりに画面の fallSpeed% 落ちる
+      const movePerSecond = (fallSpeed / 100) * container.clientHeight;
+      y += movePerSecond * deltaTime;
+
+      // 下まで行ったら上に戻る
+      if (y > container.clientHeight) {
+        y = -photo.clientHeight;
+      }
+
       photo.style.top = y + 'px';
       requestAnimationFrame(fallLoop);
     }
 
+
+
     fallButton.addEventListener('click', () => {
-      if (!falling) {
-        falling = true;
+      falling = !falling;
+      fallButton.textContent = falling ? '停止' : '落下開始';
+      if (falling) {
         y = 0;
+        lastTime = 0;
         requestAnimationFrame(fallLoop);
-        fallButton.textContent = '停止';
-      } else {
-        falling = false;
-        fallButton.textContent = '落下';
       }
     });
 
