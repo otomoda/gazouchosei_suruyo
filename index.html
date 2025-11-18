@@ -163,6 +163,35 @@
       font-weight: bold;
     }
 
+    .size-control {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .size-buttons {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 8px;
+      gap: 8px;
+    }
+
+    .size-buttons button {
+      margin: 0 4px;
+      padding: 4px 10px;
+      font-size: 14px;
+      border-radius: 8px;
+      background: #2563eb;
+      color: white;
+      border: none;
+    }
+
+    .size-buttons button:active {
+      background: #1e4ed8;
+    }
+
+
+
   </style>
 </head>
 <body>
@@ -194,8 +223,23 @@
         <img src="pet_huwahuwa.png" class="thumbnail" data-src="pet_huwahuwa.png">
       </div>
 
-      <label for="sizeRange">サイズ調整 (0〜100%):</label>
+ <!--     <label for="sizeRange">サイズ調整 (0〜100%):</label>
       <input id="sizeRange" type="range" min="0" max="100" value="50">
+    -->
+      <!-- 画像サイズ調整 -->
+      <div class="size-control">
+        <label for="sizeRange">画像サイズ（％）:</label>
+        <span id="sizeValue">50%</span><br>
+        <input id="sizeRange" type="range" min="0" max="100" value="50" step="1">
+
+        <!-- ✅ 画像サイズ調整ボタン群 -->
+        <div class="size-buttons">
+          <button id="minusSize10">−10%</button>
+          <button id="minusSize1">−1%</button>
+          <button id="plusSize1">＋1%</button>
+          <button id="plusSize10">＋10%</button>
+        </div>
+      </div>
 
       <label for="speedRange">落下スピード調整:</label>
       <!-- 落下スピード調整 -->
@@ -216,6 +260,19 @@
         </div>
       </div>
 
+      <div class="frame-control">
+        <label for="frameRange">コマ送り間隔（ms）:</label>
+        <span id="frameValue">200ms</span><br>
+        <input id="frameRange" type="range" min="10" max="1000" value="200" step="10">
+
+        <div class="frame-buttons">
+          <button id="frameMinus100">−100ms</button>
+          <button id="frameMinus10">−10ms</button>
+          <button id="framePlus10">＋10ms</button>
+          <button id="framePlus100">＋100ms</button>
+        </div>
+      </div>
+
 
       <!-- ✅ サイズとファイル名を横並びで表示 -->
       <div id="dim-container">
@@ -233,7 +290,7 @@
     const filename = document.getElementById('filename');
     const fallButton = document.getElementById('fallButton');
     const speedRange = document.getElementById('speedRange');
-    const speedDisplay = document.getElementById('speedDisplay');
+    const speedValue = document.getElementById('speedValue');
     const container = document.getElementById('container');
     const thumbnails = document.querySelectorAll('.thumbnail');
 
@@ -298,19 +355,61 @@
     }, { passive: false });
 
     // サイズスライダー操作
+    //sizeRange.addEventListener('input', (e) => {
+    //  const percent = Number(e.target.value);
+    //  photo.style.width = percent + '%';
+    //  photo.style.height = 'auto';
+    //  sizeDisplay.textContent = `サイズ: ${percent}%`;
+    //  //updateDim();
+    //});
+
+    // ✅ 画像サイズ関連
+    const sizeValue = document.getElementById('sizeValue');
+    const minusSize10 = document.getElementById('minusSize10');
+    const minusSize1 = document.getElementById('minusSize1');
+    const plusSize1 = document.getElementById('plusSize1');
+    const plusSize10 = document.getElementById('plusSize10');
+
+    function applyImageSize(percent) {
+      percent = Math.max(0, Math.min(percent, 100)); // 範囲制限
+      sizeRange.value = percent;
+      sizeValue.textContent = percent + '%';
+      const aspect = naturalHeight / naturalWidth;
+      photo.style.width = (window.innerWidth * percent / 100) + 'px';
+      photo.style.height = (window.innerWidth * percent / 100 * aspect) + 'px';
+    }
+
+    // ✅ スライダー操作
     sizeRange.addEventListener('input', (e) => {
-      const percent = Number(e.target.value);
-      photo.style.width = percent + '%';
-      photo.style.height = 'auto';
-      sizeDisplay.textContent = `サイズ: ${percent}%`;
-      //updateDim();
+      applyImageSize(Number(e.target.value));
     });
 
+    // ✅ ボタン操作
+    minusSize10.addEventListener('click', () => applyImageSize(Number(sizeRange.value) - 10));
+    minusSize1.addEventListener('click', () => applyImageSize(Number(sizeRange.value) - 1));
+    plusSize1.addEventListener('click', () => applyImageSize(Number(sizeRange.value) + 1));
+    plusSize10.addEventListener('click', () => applyImageSize(Number(sizeRange.value) + 10));
+
+    // ✅ 初期設定（50％表示）
+    window.addEventListener('load', () => {
+      applyImageSize(50);
+    });
+
+    // ==== 落下アニメーション関連 ====
+    let fallTimer = null; // setInterval 用
+    let fallSpeedPercent = 5; // スピード（％/秒）
+    let intervalDelay = 200;  // コマ送り間隔（ms）
 
     // スピードスライダー操作
-    speedRange.addEventListener('input', (e) => {
+    /*speedRange.addEventListener('input', (e) => {
       fallSpeed = Number(e.target.value);
       speedDisplay.textContent = `速度: ${fallSpeed}%`;
+    });*/
+
+    // 落下スピードスライダーの連動は既存コードと同じ
+    speedRange.addEventListener('input', (e) => {
+      fallSpeedPercent = Number(e.target.value);
+      speedValue.textContent = `${fallSpeedPercent}%`;
     });
 
     document.getElementById('minus10').addEventListener('click', () => changeSpeed(-10));
@@ -323,12 +422,11 @@
       let newValue = parseInt(range.value) + delta;
 
       // 範囲を1〜200に制限
-      if (newValue < 0) newValue = 0;
-      if (newValue > 200) newValue = 200;
+      newValue = Math.max(1, Math.min(newValue, 200));
 
       range.value = newValue;
-      fallSpeed = newValue;
-      document.getElementById('speedValue').textContent = newValue + '%';
+      fallSpeedPercent = newValue; // ✅ こちらを更新
+      speedValue.textContent = `${fallSpeedPercent}%`;
     }
 
     function updateDim() {
@@ -338,9 +436,9 @@
     }
 
     // 落下アニメーション
-    let lastTime = 0;
+    //let lastTime = 0;
 
-    function fallLoop(timestamp) {
+    /*function fallLoop(timestamp) {
       if (!falling) {
         lastTime = 0;
         return;
@@ -373,6 +471,77 @@
         lastTime = 0;
         requestAnimationFrame(fallLoop);
       }
+    });*/
+
+    // コマ送り落下
+    function startFalling() {
+      if (fallTimer) return; // 二重起動防止
+      fallTimer = setInterval(() => {
+        // ✅ 毎回 fallSpeedPercent を反映
+        const pixelsPerFrame = (window.innerHeight * fallSpeedPercent / 100) * (intervalDelay / 1000);
+        y += pixelsPerFrame;
+        if (y > container.clientHeight) {
+          y = -photo.clientHeight; // 上から再出現
+        }
+        photo.style.top = y + 'px';
+      }, intervalDelay);
+    }
+
+    function stopFalling() {
+      clearInterval(fallTimer);
+      fallTimer = null;
+    }
+
+    // 落下ボタン操作
+    fallButton.addEventListener('click', () => {
+      if (!fallTimer) {
+        y = 0;
+        startFalling();
+        fallButton.textContent = '停止';
+      } else {
+        stopFalling();
+        fallButton.textContent = '落下';
+      }
+    });
+
+    //コマ送り速度変更
+    const frameRange = document.getElementById('frameRange');
+    const frameValue = document.getElementById('frameValue');
+
+    const frameMinus100 = document.getElementById('frameMinus100');
+    const frameMinus10 = document.getElementById('frameMinus10');
+    const framePlus10 = document.getElementById('framePlus10');
+    const framePlus100 = document.getElementById('framePlus100');
+
+    function applyFrameInterval(newDelay) {
+      newDelay = Math.max(10, Math.min(newDelay, 1000)); // 10〜1000msに制限
+
+      intervalDelay = newDelay;
+      frameRange.value = newDelay;
+      frameValue.textContent = newDelay + "ms";
+
+      // もし落下中なら即座に反映
+      if (fallTimer) {
+        stopFalling();
+        startFalling();
+      }
+    }
+
+    frameRange.addEventListener('input', (e) => {
+      applyFrameInterval(Number(e.target.value));
+    });
+
+    frameMinus100.addEventListener('click', () => {
+      applyFrameInterval(Number(frameRange.value) - 100);
+    });
+    frameMinus10.addEventListener('click', () => {
+      applyFrameInterval(Number(frameRange.value) - 10);
+    });
+    framePlus10.addEventListener('click', () => {
+      applyFrameInterval(Number(frameRange.value) + 10);
+    });
+    framePlus100.addEventListener('click', () => {
+      applyFrameInterval(Number(frameRange.value) + 100);
     });
 
     window.addEventListener('load', () => {
