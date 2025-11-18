@@ -226,14 +226,27 @@
       font-size: 14px;
     }
 
+    .hiddenUI {
+      display: none !important;
+    }
+
 
   </style>
 </head>
 <body>
+
+    <button id="toggleUI" class="btn"
+      style="position:absolute; top:10px; right:10px; z-index:9999;">
+      UI 表示/非表示
+    </button>
+
   <div id="container">
     <img id="photo"
       src="normal_apple.PNG"
       alt="画像">
+
+    <div id="uiContainer">
+
     <div id="controls">
 
       <div class="top-buttons">
@@ -327,6 +340,7 @@
           <div id="alwaysSpeed">落下スピード: 10%/秒</div>
           <div id="alwaysFrame">コマ送り: 200ms</div>
           <div id="filename">画像名: image1.jpg</div>
+      </div>
       </div>
 
       
@@ -580,6 +594,14 @@
        ? '画像一覧を表示'
        : '画像一覧を非表示';
     });
+
+    const toggleUI = document.getElementById("toggleUI");
+    const uiContainer = document.getElementById("uiContainer");
+
+    toggleUI.addEventListener("click", () => {
+      uiContainer.classList.toggle("hiddenUI");
+    });
+    
   </script>
 </body>
 </html>
