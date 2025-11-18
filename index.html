@@ -106,10 +106,9 @@
 
     #dim-container {
       display: flex;
+      justify-content: space-between;
+      padding: 5px;
       align-items: center;
-      gap: 15px;
-      margin-top: 5px;
-      font-size: 14px;
     }
 
     #dim, #filename {
@@ -141,6 +140,7 @@
       margin-top: 10px;
     }
 
+    /*
     .speed-buttons {
       display: flex;
       justify-content: center;
@@ -188,8 +188,43 @@
 
     .size-buttons button:active {
       background: #1e4ed8;
+    }*/
+
+    #uiTabs {
+      display: inline-flex;
+      gap: 8px;
+      margin-left: 12px;
     }
 
+    .uiTab {
+      padding: 6px 10px;
+      background: #eee;
+      border: 1px solid #aaa;
+      border-radius: 5px;
+    }
+
+    .uiTab.active {
+      background: #ccc;
+      font-weight: bold;
+    }
+
+    .uiPanel {
+      display: none;
+    }
+
+    .uiPanel.active {
+      display: block;
+    }
+
+    #infoRow {
+      display: flex;
+      gap: 12px;       /* ← 3項目の間隔 */
+      font-size: 14px;
+    }
+
+    #filename {
+      font-size: 14px;
+    }
 
 
   </style>
@@ -203,9 +238,14 @@
 
       <div class="top-buttons">
         <button id="toggleThumbnails" class="btn">画像一覧 表示/非表示</button>
+        <div id="uiTabs">
+          <button class="uiTab active" data-target="sizeUI">画像サイズ</button>
+          <button class="uiTab" data-target="speedUI">落下スピード</button>
+          <button class="uiTab" data-target="frameUI">コマ送り間隔</button>
+        </div>
       </div>
 
-      <!-- ✅ サムネイル一覧を別ブロックに分離 -->
+      <!-- 使用画像 -->
       <div id="thumbnailContainer" class="top-buttons">
         <img src="normal_apple.PNG" class="thumbnail active" data-src="normal_apple.PNG">
         <img src="apple_1024.png" class="thumbnail active" data-src="apple_1024.png">
@@ -223,64 +263,73 @@
         <img src="pet_huwahuwa.png" class="thumbnail" data-src="pet_huwahuwa.png">
       </div>
 
- <!--     <label for="sizeRange">サイズ調整 (0〜100%):</label>
-      <input id="sizeRange" type="range" min="0" max="100" value="50">
-    -->
       <!-- 画像サイズ調整 -->
-      <div class="size-control">
-        <label for="sizeRange">画像サイズ（％）:</label>
-        <span id="sizeValue">50%</span><br>
-        <input id="sizeRange" type="range" min="0" max="100" value="50" step="1">
 
-        <!-- ✅ 画像サイズ調整ボタン群 -->
-        <div class="size-buttons">
-          <button id="minusSize10">−10%</button>
-          <button id="minusSize1">−1%</button>
-          <button id="plusSize1">＋1%</button>
-          <button id="plusSize10">＋10%</button>
-        </div>
-      </div>
+      <div id="sizeUI" class="uiPanel active">
+        <div class="size-control">
+          <label for="sizeRange">画像サイズ（％）:</label>
+          <span id="sizeValue">50%</span><br>
+          <input id="sizeRange" type="range" min="0" max="100" value="50" step="1">
 
-      <label for="speedRange">落下スピード調整:</label>
-      <!-- 落下スピード調整 -->
-      <div class="speed-control">
-        <label for="speedRange">落下スピード（%/秒）:</label>
-        <span id="speedValue">10%</span><br>
-        <input id="speedRange" type="range" min="0" max="200" value="10" step="1">
-
-        <!-- ✅ 落下開始ボタンと速度調整ボタン群を横並びに配置 -->
-        <div class="speed-buttons">
-          <button id="fallButton">落下開始</button>
-          <div class="adjust-buttons">
-            <button id="minus10">−10%</button>
-            <button id="minus1">−1%</button>
-            <button id="plus1">＋1%</button>
-            <button id="plus10">＋10%</button>
+          <div class="size-buttons">
+            <button id="minusSize10">−10%</button>
+            <button id="minusSize1">−1%</button>
+            <button id="plusSize1">＋1%</button>
+            <button id="plusSize10">＋10%</button>
           </div>
         </div>
       </div>
 
-      <div class="frame-control">
-        <label for="frameRange">コマ送り間隔（ms）:</label>
-        <span id="frameValue">200ms</span><br>
-        <input id="frameRange" type="range" min="10" max="1000" value="200" step="10">
+      <!-- 落下スピード調整 -->
 
-        <div class="frame-buttons">
-          <button id="frameMinus100">−100ms</button>
-          <button id="frameMinus10">−10ms</button>
-          <button id="framePlus10">＋10ms</button>
-          <button id="framePlus100">＋100ms</button>
+      <div id="speedUI" class="uiPanel">
+        <div class="speed-control">
+          <label for="speedRange">落下スピード（%/秒）:</label>
+          <span id="speedValue">10%</span><br>
+          <input id="speedRange" type="range" min="0" max="200" value="10" step="1">
+
+          <div class="speed-buttons">
+            <div class="adjust-buttons">
+              <button id="minus10">−10%</button>
+              <button id="minus1">−1%</button>
+              <button id="plus1">＋1%</button>
+              <button id="plus10">＋10%</button>
+            </div>
+          </div>
         </div>
       </div>
 
 
-      <!-- ✅ サイズとファイル名を横並びで表示 -->
-      <div id="dim-container">
-        <div id="sizeDisplay">サイズ: 50%</div>
-        <div id="filename">画像名: image1.jpg</div>
+      <!-- コマ送り間隔調整 -->
+
+      <div id="frameUI" class="uiPanel">
+        <div class="frame-control">
+          <label for="frameRange">コマ送り間隔（ms）:</label>
+          <span id="frameValue">200ms</span><br>
+          <input id="frameRange" type="range" min="10" max="1000" value="200" step="10">
+
+          <div class="frame-buttons">
+            <button id="frameMinus100">−100ms</button>
+            <button id="frameMinus10">−10ms</button>
+            <button id="framePlus10">＋10ms</button>
+            <button id="framePlus100">＋100ms</button>
+          </div>
+        </div>
       </div>
 
-    </div>
+
+      <!-- サイズとファイル名を横並びで表示 -->
+
+      <div id="dim-container">
+        <div id="infoRow">
+          <button id="fallButton">落下開始</button>
+          <div id="alwaysSize">サイズ: 50%</div>
+          <div id="alwaysSpeed">落下スピード: 10%/秒</div>
+          <div id="alwaysFrame">コマ送り: 200ms</div>
+          <div id="filename">画像名: image1.jpg</div>
+      </div>
+
+      
   </div>
 
   <script>
@@ -301,7 +350,7 @@
     let fallSpeed = 5;
     let falling = false;
 
-    // 🔸 サムネイルクリックで画像変更
+    // サムネイルクリックで画像変更
     thumbnails.forEach(thumb => {
       thumb.addEventListener('click', () => {
         thumbnails.forEach(t => t.classList.remove('active'));
@@ -314,7 +363,7 @@
           naturalWidth = photo.naturalWidth;
           naturalHeight = photo.naturalHeight;
 
-          // ✅ スライダーの現在値を維持して画像サイズを更新
+          // スライダーの現在値を維持して画像サイズを更新
           const currentPercent = Number(sizeRange.value);
           photo.style.width = currentPercent + '%';
           photo.style.height = 'auto';
@@ -354,16 +403,7 @@
       }
     }, { passive: false });
 
-    // サイズスライダー操作
-    //sizeRange.addEventListener('input', (e) => {
-    //  const percent = Number(e.target.value);
-    //  photo.style.width = percent + '%';
-    //  photo.style.height = 'auto';
-    //  sizeDisplay.textContent = `サイズ: ${percent}%`;
-    //  //updateDim();
-    //});
-
-    // ✅ 画像サイズ関連
+    // 画像サイズ関連
     const sizeValue = document.getElementById('sizeValue');
     const minusSize10 = document.getElementById('minusSize10');
     const minusSize1 = document.getElementById('minusSize1');
@@ -377,20 +417,21 @@
       const aspect = naturalHeight / naturalWidth;
       photo.style.width = (window.innerWidth * percent / 100) + 'px';
       photo.style.height = (window.innerWidth * percent / 100 * aspect) + 'px';
+      alwaysSize.textContent = `サイズ: ${percent}%`;
     }
 
-    // ✅ スライダー操作
+    // スライダー操作
     sizeRange.addEventListener('input', (e) => {
       applyImageSize(Number(e.target.value));
     });
 
-    // ✅ ボタン操作
+    // ボタン操作
     minusSize10.addEventListener('click', () => applyImageSize(Number(sizeRange.value) - 10));
     minusSize1.addEventListener('click', () => applyImageSize(Number(sizeRange.value) - 1));
     plusSize1.addEventListener('click', () => applyImageSize(Number(sizeRange.value) + 1));
     plusSize10.addEventListener('click', () => applyImageSize(Number(sizeRange.value) + 10));
 
-    // ✅ 初期設定（50％表示）
+    // 初期設定（50％表示）
     window.addEventListener('load', () => {
       applyImageSize(50);
     });
@@ -399,12 +440,6 @@
     let fallTimer = null; // setInterval 用
     let fallSpeedPercent = 5; // スピード（％/秒）
     let intervalDelay = 200;  // コマ送り間隔（ms）
-
-    // スピードスライダー操作
-    /*speedRange.addEventListener('input', (e) => {
-      fallSpeed = Number(e.target.value);
-      speedDisplay.textContent = `速度: ${fallSpeed}%`;
-    });*/
 
     // 落下スピードスライダーの連動は既存コードと同じ
     speedRange.addEventListener('input', (e) => {
@@ -425,8 +460,9 @@
       newValue = Math.max(1, Math.min(newValue, 200));
 
       range.value = newValue;
-      fallSpeedPercent = newValue; // ✅ こちらを更新
+      fallSpeedPercent = newValue; // こちらを更新
       speedValue.textContent = `${fallSpeedPercent}%`;
+      alwaysSpeed.textContent = `落下スピード: ${fallSpeedPercent}%/秒`;
     }
 
     function updateDim() {
@@ -435,49 +471,11 @@
       dim.textContent = `${h} × ${w}`;
     }
 
-    // 落下アニメーション
-    //let lastTime = 0;
-
-    /*function fallLoop(timestamp) {
-      if (!falling) {
-        lastTime = 0;
-        return;
-      }
-
-      if (!lastTime) lastTime = timestamp;
-      const deltaTime = (timestamp - lastTime) / 1000; // 経過時間[秒]
-      lastTime = timestamp;
-
-      // ✅ 1秒あたりに画面の fallSpeed% 落ちる
-      const movePerSecond = (fallSpeed / 100) * container.clientHeight;
-      y += movePerSecond * deltaTime;
-
-      // 下まで行ったら上に戻る
-      if (y > container.clientHeight) {
-        y = -photo.clientHeight;
-      }
-
-      photo.style.top = y + 'px';
-      requestAnimationFrame(fallLoop);
-    }
-
-
-
-    fallButton.addEventListener('click', () => {
-      falling = !falling;
-      fallButton.textContent = falling ? '停止' : '落下開始';
-      if (falling) {
-        y = 0;
-        lastTime = 0;
-        requestAnimationFrame(fallLoop);
-      }
-    });*/
-
     // コマ送り落下
     function startFalling() {
       if (fallTimer) return; // 二重起動防止
       fallTimer = setInterval(() => {
-        // ✅ 毎回 fallSpeedPercent を反映
+        // 毎回 fallSpeedPercent を反映
         const pixelsPerFrame = (window.innerHeight * fallSpeedPercent / 100) * (intervalDelay / 1000);
         y += pixelsPerFrame;
         if (y > container.clientHeight) {
@@ -519,6 +517,7 @@
       intervalDelay = newDelay;
       frameRange.value = newDelay;
       frameValue.textContent = newDelay + "ms";
+      document.getElementById('alwaysFrame').textContent = `コマ送り: ${intervalDelay}ms`;
 
       // もし落下中なら即座に反映
       if (fallTimer) {
@@ -550,6 +549,27 @@
       sizeDisplay.textContent = 'サイズ: 50%';
       filename.textContent = `画像名: normal_apple.png`;
     });
+
+    const uiTabs = document.querySelectorAll('.uiTab');
+    const uiPanels = document.querySelectorAll('.uiPanel');
+
+    uiTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+
+        // タブの active 切り替え
+        uiTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // パネルの切り替え
+        uiPanels.forEach(panel => {
+          panel.classList.remove('active');
+          if (panel.id === tab.dataset.target) {
+            panel.classList.add('active');
+          }
+        });
+      });
+    });
+
 
     const toggleButton = document.getElementById('toggleThumbnails');
     const thumbnailContainer = document.getElementById('thumbnailContainer');
