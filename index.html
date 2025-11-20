@@ -320,7 +320,7 @@
         <div class="frame-control">
           <label for="frameRange">コマ送り間隔（ms）:</label>
           <span id="frameValue">200ms</span><br>
-          <input id="frameRange" type="range" min="10" max="1000" value="200" step="10">
+          <input id="frameRange" type="range" min="1" max="1000" value="200" step="10">
 
           <div class="frame-buttons">
             <button id="frameMinus100">−100ms</button>
@@ -527,7 +527,7 @@
     const framePlus100 = document.getElementById('framePlus100');
 
     function applyFrameInterval(newDelay) {
-      newDelay = Math.max(10, Math.min(newDelay, 1000)); // 10〜1000msに制限
+      newDelay = Math.max(1, Math.min(newDelay, 1000)); // 10〜1000msに制限
 
       intervalDelay = newDelay;
       frameRange.value = newDelay;
