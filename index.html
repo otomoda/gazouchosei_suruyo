@@ -37,6 +37,7 @@
       object-fit: contain;
       transition: transform 0.1s ease-out;
       touch-action: none;
+      /*z-index: 9999;*/
     }
 
     #controls {
@@ -339,7 +340,7 @@
           <div id="alwaysSize">サイズ: 50%</div>
           <div id="alwaysSpeed">落下スピード: 10%/秒</div>
           <div id="alwaysFrame">コマ送り: 200ms</div>
-          <div id="filename">画像名: image1.jpg</div>
+          <!--<div id="filename">画像名: image1.jpg</div>-->
       </div>
       </div>
 
@@ -601,7 +602,7 @@
     toggleUI.addEventListener("click", () => {
       uiContainer.classList.toggle("hiddenUI");
     });
-    
+
   </script>
 </body>
 </html>
